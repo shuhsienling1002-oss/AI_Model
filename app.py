@@ -1,51 +1,30 @@
 import streamlit as st
-import time
+import google.generativeai as genai
 
-# 1. 介面基礎設定 (隱藏預設的 Streamlit 選單與頁腳，達到極簡視覺)
-st.set_page_config(page_title="阿美語AI神隊友", page_icon="🌿", layout="centered")
-hide_st_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
-            </style>
-            """
-st.markdown(hide_st_style, unsafe_allow_html=True)
+# 1. 設定頁面標題
+st.set_page_config(page_title="阿美語 AI 神隊友", page_icon="💡")
+st.title("阿美語 AI 神隊友")
 
-# 2. 標題設計
-st.title("🌿 阿美語AI神隊友")
-st.markdown("---")
+# 2. 設定 API Key (請至 Google AI Studio 取得)
+# 建議使用 st.secrets 來管理敏感資訊，測試時可暫時放在這裡
+GOOGLE_API_KEY = "您的_API_KEY_放在這裡" 
+genai.configure(api_key=GOOGLE_API_KEY)
 
-# 3. 初始化對話歷史狀態 (State Flow)
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# 3. 初始化模型 (這裡選用 Gemini 1.5 Flash，適合快速回應)
+model = genai.GenerativeModel('gemini-1.5-flash')
 
-# 4. 顯示歷史對話 (輸出方框)
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# 4. 輸入框與邏輯
+user_input = st.text_area("請輸入您想詢問的阿美語問題：", height=150)
 
-# 5. 使用者輸入方框 (Input Zone)
-if prompt := st.chat_input("請輸入您想查詢的阿美語或中文..."):
-    # 將使用者輸入加入歷史紀錄並顯示
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    # 6. AI 回應區塊 (這裡預留了串接 API 的位置)
-    with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        
-        # 模擬 AI 思考與打字效果 (未來此處替換為實際的 Gemini API 呼叫)
-        full_response = ""
-        # 這裡的假回應只是為了展示介面，之後需換成真實模型回應
-        simulated_response = f"這是一個模擬回應。未來只要將您的 NotebookLM 語料匯入 Gemini API，我就能用阿美語回答關於「{prompt}」的問題！" 
-        
-        for chunk in simulated_response.split():
-            full_response += chunk + " "
-            time.sleep(0.05)
-            message_placeholder.markdown(full_response + "▌")
-        message_placeholder.markdown(full_response)
-        
-    # 將 AI 回應加入歷史紀錄
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+if st.button("送出提問"):
+    if user_input:
+        with st.spinner('AI 神隊友正在思考中...'):
+            try:
+                # 呼叫 AI
+                response = model.generate_content(f"你是一位阿美語專家，請回答以下問題: {user_input}")
+                st.subheader("阿美語 AI 回應：")
+                st.write(response.text)
+            except Exception as e:
+                st.error(f"發生錯誤: {e}")
+    else:
+        st.warning("請先輸入問題喔！")
